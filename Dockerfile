@@ -75,11 +75,11 @@ RUN : \
   && apt-get autoremove -y \
   && rm -rf /var/lib/apt/lists/* \
   && update-alternatives --install /usr/bin/python python /usr/bin/python3 10 \
-  && python -m pip install --upgrade \
+  && python -m pip install --upgrade --ignore-installed \
     pip \
     virtualenv \
   && cd /opt \  
-  && git clone https://github.com/HBehrens/puncover.git \
+  && git clone -b 0.5.0 https://github.com/HBehrens/puncover.git \
   && cd puncover \
   && python setup.py -q install \
   && echo IDF_CHECKOUT_REF=$IDF_CHECKOUT_REF IDF_CLONE_BRANCH_OR_TAG=$IDF_CLONE_BRANCH_OR_TAG \
