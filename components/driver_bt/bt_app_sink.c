@@ -72,6 +72,7 @@ static enum { AUDIO_IDLE, AUDIO_CONNECTED, AUDIO_PLAYING } s_audio = AUDIO_IDLE;
 
 static int s_sample_rate;
 static int tl;
+static esp_bd_addr_t s_connected_bda;
 static bt_cmd_vcb_t cmd_handler_chain;
 
 #define METADATA_LEN 128
@@ -144,6 +145,7 @@ const static actrls_t controls = {
 void bt_disconnect(void) {
 	displayer_control(DISPLAYER_SHUTDOWN);
 	if (s_audio == AUDIO_PLAYING) esp_avrc_ct_send_passthrough_cmd(tl++ & 0x0f, ESP_AVRC_PT_CMD_STOP, ESP_AVRC_PT_CMD_STATE_PRESSED);
+	esp_a2d_sink_disconnect(s_connected_bda);
 	actrls_unset();
 	ESP_LOGD(BT_AV_TAG, "forced disconnection %d", s_audio);
 }
@@ -281,11 +283,13 @@ static void bt_av_hdl_a2d_evt(uint16_t event, void *p_param)
         ESP_LOGD(BT_AV_TAG, "A2DP connection state: %s, [%02x:%02x:%02x:%02x:%02x:%02x]",
              s_a2d_conn_state_str[a2d->conn_stat.state], bda[0], bda[1], bda[2], bda[3], bda[4], bda[5]);
         if (a2d->conn_stat.state == ESP_A2D_CONNECTION_STATE_DISCONNECTED) {
+            memset(s_connected_bda, 0, sizeof(esp_bd_addr_t));
             esp_bt_gap_set_scan_mode(ESP_BT_CONNECTABLE, ESP_BT_GENERAL_DISCOVERABLE);
 			(*bt_app_a2d_cmd_cb)(BT_SINK_DISCONNECTED);
         } else if (a2d->conn_stat.state == ESP_A2D_CONNECTION_STATE_CONNECTED){
 			abs_volume = -1;
 			s_volume = sink_volume;
+            memcpy(s_connected_bda, a2d->conn_stat.remote_bda, sizeof(esp_bd_addr_t));
             esp_bt_gap_set_scan_mode(ESP_BT_NON_CONNECTABLE, ESP_BT_NON_DISCOVERABLE);
 			(*bt_app_a2d_cmd_cb)(BT_SINK_CONNECTED);
         }
