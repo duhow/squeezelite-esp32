@@ -79,8 +79,9 @@ RUN : \
     pip \
     virtualenv \
   && cd /opt \  
-  && git clone -b 0.5.0 https://github.com/HBehrens/puncover.git \
+  && git clone https://github.com/HBehrens/puncover.git \
   && cd puncover \
+  && git checkout tags/0.5.0 \
   && python setup.py -q install \
   && echo IDF_CHECKOUT_REF=$IDF_CHECKOUT_REF IDF_CLONE_BRANCH_OR_TAG=$IDF_CLONE_BRANCH_OR_TAG \
   && git clone --recursive \
