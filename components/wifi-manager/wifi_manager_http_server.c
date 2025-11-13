@@ -115,6 +115,7 @@ void register_regular_handlers(httpd_handle_t server){
 //	httpd_uri_t connect_redirect_4 = { .uri = "/ncsi.txt", .method = HTTP_GET, .handler = redirect_ev_handler, .user_ctx = rest_context };// Windows
 //	httpd_register_uri_handler(server, &connect_redirect_4);
 	httpd_uri_t connect_redirect_5 = { .uri = "/hotspot-detect.html", .method = HTTP_GET, .handler = redirect_ev_handler, .user_ctx = rest_context }; // iOS 8/9
+	register_api_endpoints(server); // Register API endpoints from http_server_handlers.c
 	httpd_register_uri_handler(server, &connect_redirect_5);
 	httpd_uri_t connect_redirect_6 = { .uri = "/library/test/success.html", .method = HTTP_GET, .handler = redirect_ev_handler, .user_ctx = rest_context };// iOS 8/9
 	httpd_register_uri_handler(server, &connect_redirect_6);

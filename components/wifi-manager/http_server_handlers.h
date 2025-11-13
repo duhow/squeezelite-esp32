@@ -64,6 +64,8 @@ esp_err_t ap_scan_handler(httpd_req_t *req);
 esp_err_t redirect_ev_handler(httpd_req_t *req);
 esp_err_t redirect_200_ev_handler(httpd_req_t *req);
 
+esp_err_t api_bt_disconnect_handler(httpd_req_t *req);
+void register_api_endpoints(httpd_handle_t server);
 
 esp_err_t err_handler(httpd_req_t *req, httpd_err_code_t error);
 #define SCRATCH_BUFSIZE (10240)

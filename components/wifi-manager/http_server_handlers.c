@@ -27,6 +27,7 @@ Copyright (c) 2017-2021 Sebastien L
 #include "network_wifi.h"
 #include "network_status.h"
 #include "tools.h"
+#include "../driver_bt/bt_app_sink.h" // for api_bt_disconnect_handler
 
 #define HTTP_STACK_SIZE	(5*1024)
 const char str_na[]="N/A";
@@ -1136,15 +1137,62 @@ esp_err_t status_get_handler(httpd_req_t *req){
 }
 
 
+
+// --- API HANDLERS ---
+esp_err_t api_bt_disconnect_handler(httpd_req_t *req) {
+	ESP_LOGD_LOC(TAG, "serving [%s]", req->uri);
+	esp_err_t err = set_content_type_from_req(req);
+	if (err != ESP_OK) {
+		return err;
+	}
+
+	// Validar si el sink Bluetooth está activado y conectado usando configuración dinámica
+	char *bt_sink_enabled = config_alloc_get(NVS_TYPE_STR, "enable_bt_sink");
+	bool enabled = (bt_sink_enabled && (strcmp(bt_sink_enabled, "1") == 0 || strcasecmp(bt_sink_enabled, "y") == 0));
+	FREE_AND_NULL(bt_sink_enabled);
+
+	if (!enabled) {
+		httpd_resp_sendstr(req, "{\"result\":\"BT sink no habilitado\"}");
+		return ESP_OK;
+	}
+	bt_disconnect();
+	httpd_resp_sendstr(req, "{\"result\":\"Desconexión Bluetooth ejecutada\"}");
+	return ESP_OK;
+}
+
+// --- REGISTRO DE ENDPOINTS API ---
+typedef struct {
+	const char *uri;
+	httpd_method_t method;
+	esp_err_t (*handler)(httpd_req_t *);
+} api_endpoint_t;
+
+static const api_endpoint_t api_endpoints[] = {
+	{ "/api/bt/disconnect", HTTP_POST, api_bt_disconnect_handler },
+	// Agregar aquí más endpoints en el futuro
+};
+
+void register_api_endpoints(httpd_handle_t server) {
+	for (size_t i = 0; i < sizeof(api_endpoints)/sizeof(api_endpoints[0]); ++i) {
+		httpd_uri_t uri_handler = {
+			.uri = api_endpoints[i].uri,
+			.method = api_endpoints[i].method,
+			.handler = api_endpoints[i].handler,
+			.user_ctx = NULL
+		};
+		httpd_register_uri_handler(server, &uri_handler);
+	}
+}
+
 esp_err_t err_handler(httpd_req_t *req, httpd_err_code_t error){
 	esp_err_t err = ESP_OK;
 
-    if(error != HTTPD_404_NOT_FOUND){
-    	err = httpd_resp_send_err(req, error, NULL);
-    }
-    else {
-    	err = redirect_processor(req,error);
-    }
+	if(error != HTTPD_404_NOT_FOUND){
+		err = httpd_resp_send_err(req, error, NULL);
+	}
+	else {
+		err = redirect_processor(req,error);
+	}
 
 	return err;
 }
